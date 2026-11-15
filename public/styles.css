@@ -5,7 +5,7 @@ main{flex:1;padding:20px 32px;max-width:1400px;width:100%;margin:0 auto}
 .govbar{background:var(--navy);color:#fff;font-size:12px;padding:4px 32px}
 .hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 32px;border-bottom:1px solid var(--line)}
 .brand{display:flex;gap:12px;align-items:center;color:var(--navy);text-decoration:none}
-.logo{background:#d7153a;color:#fff;font-weight:800;padding:8px 10px;border-radius:3px}
+.logo{height:64px;width:auto}
 .user{display:flex;gap:8px;align-items:center}
 .user .av{background:var(--navy);color:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-size:13px}
 .subbar{background:var(--grey);padding:6px 32px;display:flex;gap:20px;font-size:14px}
