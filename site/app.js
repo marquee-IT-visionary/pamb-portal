@@ -41,7 +41,31 @@
   function closeModal() { const m = $('#modal'); m.classList.remove('on'); m.innerHTML = ''; }
 
   const userSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.5"/><path d="M3 21c0-5 4-7 9-7s9 2 9 7z"/></svg>';
+  const MENU = [
+    ['Projects', [['List of Projects', '#/projects'], ['Create Project', '#/new']]],
+    ['Grants', [['List of Grants', '#/list/grants']]],
+    ['Document Compliance', [['List of Documents', '#/list/documents']]],
+    ['Regional Map', [['Regional Map', '#/map']]],
+    ['Asset Risk Management', [['List of Risks', '#/list/risks']]],
+    ['Grants Prioritization', [['Prioritization Scores', '#/list/gprio']]],
+    ['Freight Permits', [['List of Permits', '#/list/permits']]],
+  ];
+  const LISTS = {
+    grants: ['List of Grants', ['Grant Name', 'Grant ID', 'Council', 'Amount', 'Status'], [['Parramatta Bridge Renewal', 'GR-1001', 'City of Parramatta', '$1,200,000', 'Approved'], ['Newcastle Road Resheeting', 'GR-1002', 'Newcastle', '$850,000', 'Submitted']]],
+    documents: ['List of Documents', ['Document', 'Project ID', 'Type', 'Uploaded', 'Compliance'], [['Project_estimate.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Compliant'], ['Design v11.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Under review']]],
+    risks: ['List of Risks', ['Risk ID', 'Title', 'Asset ID', 'Category', 'Owner', 'Status'], [['RISKHUB-123', 'Structural fatigue', 'BIS-9561', 'Safety', 'John Doe', 'Open'], ['RISKHUB-456', 'Scour at piers', 'BIS-9561', 'Environmental', 'Jane Smith', 'Open']]],
+    gprio: ['Prioritization Scores', ['Grant ID', 'Grant Name', 'Score', 'Rank'], [['GR-1001', 'Parramatta Bridge Renewal', '8', '1'], ['GR-1002', 'Newcastle Road Resheeting', '6', '2']]],
+    permits: ['List of Permits', ['Permit ID', 'Operator', 'Route', 'Valid To', 'Status'], [['FP-2001', 'Hunter Freight Pty Ltd', 'Pacific Hwy', '30/06/2026', 'Active'], ['FP-2002', 'Metro Haulage', 'M4 Motorway', '31/03/2026', 'Pending']]],
+  };
+  function renderNav() {
+    const li = !!user();
+    const menu = li ? MENU.map(([n, subs], i) => `<div class="mi"><button class="mb" aria-haspopup="true" aria-expanded="false">${n} ▾</button><div class="sm">${subs.map(([s, h]) => `<a href="${h}">${s}</a>`).join('')}</div></div>`).join('') : '';
+    $('#nav').innerHTML = `<div class="menu">${menu}</div><div class="util"><a href="${li ? '#/tiles' : '#/'}">Home</a><a href="#/contact">Contact Us</a><a href="#/help">Help</a></div>`;
+    $$('#nav .mb').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); const o = b.parentElement.classList.contains('open'); $$('#nav .mi').forEach((x) => x.classList.remove('open')); if (!o) b.parentElement.classList.add('open'); b.setAttribute('aria-expanded', String(!o)); }));
+  }
+  document.addEventListener('click', () => $$('#nav .mi').forEach((x) => x.classList.remove('open')));
   function renderUser() {
+    renderNav();
     $('#userbox').innerHTML = user() ? `<button class="user" id="logout" title="Click to sign out">C James ${userSvg}</button>` : '';
     const b = $('#logout'); if (b) b.onclick = () => { localStorage.removeItem(AUTH); location.hash = '#/'; };
   }
@@ -62,10 +86,14 @@
       app.innerHTML = `<div class="banner"><h1>Select the appropriate tile</h1><div class="tiles">${['Transport Assets|#/transport', 'Rail Assets|#/soon/Rail Assets', 'Maritime Assets|#/soon/Maritime Assets'].map((t) => { const [n, h] = t.split('|'); return `<a class="tile" href="${h}">${n}<span>➜</span></a>`; }).join('')}</div></div>`;
     },
     transport() {
-      const t = [['Projects', '#/projects'], ['Grants', '#/soon/Grants'], ['Document Compliance', '#/soon/Document Compliance'], ['Regional Map', '#/map'], ['Asset Risk Management', '#/soon/Asset Risk Management'], ['Grants Prioritization', '#/soon/Grants Prioritization'], ['Freight Permits', '#/soon/Freight Permits']];
+      const t = MENU.map(([n, s]) => [n, s[0][1]]);
       app.innerHTML = `<div class="banner"><h1>Transport Assets</h1><div class="tiles">${t.map(([n, h]) => `<a class="tile" href="${h}">${n}<span>➜</span></a>`).join('')}</div></div>`;
     },
     soon(name) { app.innerHTML = `<h1>${esc(decodeURIComponent(name))}</h1><p class="muted">This module is not part of the current design.</p><a class="btn" href="#/tiles">Back</a>`; },
+    list(k) {
+      const d = LISTS[k]; if (!d) return views.soon(k);
+      app.innerHTML = `<h1>${d[0]}</h1><div class="scroll"><table class="tbl"><thead><tr>${d[1].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${d[2].map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="muted">Showing ${d[2].length} of ${d[2].length} results</p>`;
+    },
     contact() { app.innerHTML = '<h1>Contact Us</h1><p>Email: pamb-support@transport.nsw.gov.au (demo)</p>'; },
     help() { app.innerHTML = '<h1>Help</h1><p>Use the tiles to open Transport Assets → Projects. Open a project to view its Project, Asset, Benefits, Risk, Financial, Schedule and Audit tabs.</p>'; },
     map() {
