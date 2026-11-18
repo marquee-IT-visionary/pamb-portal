@@ -79,8 +79,8 @@
       <div class="card"><h2>📅 Announcements</h2><ul><li>Transport secretary bold claim: we are modernizing TFM</li><li>TFM unit just secured $1.2B funding to upskill</li></ul></div></div></div>`;
     },
     login() {
-      app.innerHTML = `<div class="panel" style="max-width:420px;margin:30px auto"><h2>Transport User Login</h2><div class="body f"><p class="muted">Demo sign-in – no credentials are checked.</p><label>Username</label><input id="u" value="C James"><br><br><label>Password</label><input id="p" type="password" value="demo"><br><br><button class="btn" id="go">Sign in</button></div></div>`;
-      $('#go').onclick = () => { localStorage.setItem(AUTH, $('#u').value || 'C James'); location.hash = '#/tiles'; };
+      localStorage.setItem(AUTH, 'C James');
+      location.hash = '#/projects';
     },
     tiles() {
       app.innerHTML = `<div class="banner"><h1>Select the appropriate tile</h1><div class="tiles">${['Transport Assets|#/transport', 'Rail Assets|#/soon/Rail Assets', 'Maritime Assets|#/soon/Maritime Assets'].map((t) => { const [n, h] = t.split('|'); return `<a class="tile" href="${h}">${n}<span>➜</span></a>`; }).join('')}</div></div>`;
