@@ -5,15 +5,23 @@
   const KEY = 'pamb.projects.v1', AUTH = 'pamb.user';
   const app = $('#app');
 
-  const RISKS = [
-    ['RISK-1', 'Structural fatigue', 'BIS-9561', 'Safety', 'John Doe', 'Open'],
-    ['RISK-2', 'Scour at piers', 'BIS-1234', 'Environmental', 'Jane Smith', 'Open'],
-    ['RISK-3', 'Pavement deterioration', 'RAMS-4410', 'Safety', 'John Doe', 'Open'],
-    ['RISK-4', 'Drainage failure', 'RAMS-1234', 'Environmental', 'Jane Smith', 'Open'],
-    ['RISK-5', 'Heavy vehicle overload', 'RAMS-2210', 'Safety', 'John Doe', 'Open'],
+  const RKEY = 'pamb.risks.v1';
+  const USERS = ['John Doe', 'Jane Smith', 'C James', 'Alex Chen', 'Priya Patel', 'Sam Wilson'];
+  const RISK_TYPES = ['Road', 'Bridge'], PRIORITIES = ['High', 'Medium', 'Low'];
+  const seedRisks = () => [
+    { id: 'RISK-1', title: 'Structural fatigue', type: 'Bridge', priority: 'High', owner: 'John Doe', actionOwner: 'Alex Chen', assetId: 'BIS-9561' },
+    { id: 'RISK-2', title: 'Scour at piers', type: 'Bridge', priority: 'Medium', owner: 'Jane Smith', actionOwner: 'Priya Patel', assetId: 'BIS-1234' },
+    { id: 'RISK-3', title: 'Pavement deterioration', type: 'Road', priority: 'High', owner: 'John Doe', actionOwner: 'Sam Wilson', assetId: 'RAMS-4410' },
+    { id: 'RISK-4', title: 'Drainage failure', type: 'Road', priority: 'Low', owner: 'Jane Smith', actionOwner: 'Alex Chen', assetId: '' },
+    { id: 'RISK-5', title: 'Heavy vehicle overload', type: 'Road', priority: 'Medium', owner: 'John Doe', actionOwner: 'Priya Patel', assetId: '' },
   ];
-  const riskTitle = (id) => (RISKS.find((r) => r[0] === id) || [])[1] || '';
-  const riskSel = (attr, cur, dis) => `<select ${attr} ${dis ? 'disabled' : ''}><option value="">None</option>${RISKS.map(([id, t]) => `<option value="${id}" ${id === cur ? 'selected' : ''}>${id} – ${esc(t)}</option>`).join('')}${cur && !riskTitle(cur) ? `<option selected>${esc(cur)}</option>` : ''}</select>`;
+  let RISKS;
+  try { RISKS = JSON.parse(localStorage.getItem(RKEY)) || seedRisks(); } catch { RISKS = seedRisks(); }
+  const saveRisks = () => localStorage.setItem(RKEY, JSON.stringify(RISKS));
+  const nextRiskId = () => 'RISK-' + (Math.max(0, ...RISKS.map((r) => parseInt(String(r.id).replace(/\D/g, ''), 10) || 0)) + 1);
+  const riskTitle = (id) => (RISKS.find((r) => r.id === id) || {}).title || '';
+  const riskSel = (attr, cur, dis) => `<select ${attr} ${dis ? 'disabled' : ''}><option value="">None</option>${RISKS.map((r) => `<option value="${esc(r.id)}" ${r.id === cur ? 'selected' : ''}>${esc(r.id)} – ${esc(r.title)}</option>`).join('')}${cur && !riskTitle(cur) ? `<option selected>${esc(cur)}</option>` : ''}</select>`;
+  const userSel = (attr, cur) => `<select ${attr}><option value="">Select user</option>${USERS.map((u) => `<option ${u === cur ? 'selected' : ''}>${esc(u)}</option>`).join('')}</select>`;
   const seed = () => [
     mk('PROJ-1234', 'Parramatta Rd Maint', { gated: true, preGate: 'PRE-23', assetType: 'Road', assetId: 'RAMS-4410', riskId: 'RISK-3', agenda: 'JIRA-12345', p50: '12/12/2025', p90: '25/2/2026', slip: 'Yes', gate: 'Gate 2', pm: 'John Doe', score: 7, lat: -33.8150, lng: 151.0011 }),
     mk('PROJ-5678', 'Parramatta Bridge Maintenance', { gated: true, preGate: 'PRE-24', assetType: 'Bridge', assetId: 'BIS-9561', riskId: 'RISK-1', agenda: 'JIRA-12345', p50: '1/3/2026', p90: '30/6/2026', slip: 'No', gate: 'Gate 1', pm: 'Jane Smith', score: 8, lat: -33.8136, lng: 151.0034 }),
@@ -116,16 +124,13 @@
     ['Projects', [['List of Projects', '#/projects'], ['Create Project', '#/new']]],
     ['Assets', [['List of Assets', '#/assets']]],
     ['Grants', [['List of Grants', '#/list/grants']]],
-    ['Document Compliance', [['List of Documents', '#/list/documents']]],
-    ['Regional Map', [['Regional Map', '#/map']]],
-    ['Asset Risk Management', [['List of Risks', '#/list/risks']]],
+    ['Risk', [['List of Risks', '#/risks']]],
     ['Grants Prioritization', [['Prioritization Scores', '#/list/gprio']]],
     ['Freight Permits', [['List of Permits', '#/list/permits']]],
   ];
   const LISTS = {
     grants: ['List of Grants', ['Grant Name', 'Grant ID', 'Council', 'Amount', 'Status'], [['Parramatta Bridge Renewal', 'GR-1001', 'City of Parramatta', '$1,200,000', 'Approved'], ['Newcastle Road Resheeting', 'GR-1002', 'Newcastle', '$850,000', 'Submitted']]],
     documents: ['List of Documents', ['Document', 'Project ID', 'Type', 'Uploaded', 'Compliance'], [['Project_estimate.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Compliant'], ['Design v11.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Under review']]],
-    risks: ['List of Risks', ['Risk ID', 'Title', 'Asset ID', 'Category', 'Owner', 'Status'], RISKS],
     gprio: ['Prioritization Scores', ['Grant ID', 'Grant Name', 'Score', 'Rank'], [['GR-1001', 'Parramatta Bridge Renewal', '8', '1'], ['GR-1002', 'Newcastle Road Resheeting', '6', '2']]],
     permits: ['List of Permits', ['Permit ID', 'Operator', 'Route', 'Valid To', 'Status'], [['FP-2001', 'Hunter Freight Pty Ltd', 'Pacific Hwy', '30/06/2026', 'Active'], ['FP-2002', 'Metro Haulage', 'M4 Motorway', '31/03/2026', 'Pending']]],
   };
@@ -293,7 +298,7 @@
       if (!a) { $('#tab').innerHTML = '<div class="panel"><div class="body">No asset linked. Select an existing asset on the Project tab.</div></div>'; return; }
       const pid = p.id || p.preGate;
       const pool = isNew ? [...projects, { ...p, id: pid }] : projects;
-      const st = { edit: false, d: a, pool, inflight: new Set(a.inflight), future: new Set(a.future) };
+      const st = { edit: false, d: a, pool, inflight: new Set(a.inflight), future: new Set(a.future), risks: new Set(RISKS.filter((r) => r.assetId === a.id).map((r) => r.id)) };
       if (pid && !st.inflight.has(pid) && !st.future.has(pid)) st.inflight.add(pid);
       st.footer = `<div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn" href="#/asset/${esc(a.id)}">Open Asset to Edit</a></div>`;
       assetTabs($('#tab'), st);
@@ -421,13 +426,19 @@
     };
     const grantTbl = (title, list) => `<div class="panel"><h2>${title}</h2><div class="body scroll"><table class="tbl"><thead><tr><th>Grant Name</th><th>Grant ID</th><th>Status</th></tr></thead><tbody>${list.map((g) => `<tr><td>${esc(g.name)}</td><td>${esc(g.id)}</td><td>${esc(g.status)}</td></tr>`).join('') || '<tr><td colspan="3">No data found</td></tr>'}</tbody></table></div></div>`;
     const grants = d.grants || [];
+    const riskPanel = () => {
+      const rows = RISKS.filter((r) => st.risks.has(r.id)), avail = RISKS.filter((r) => !st.risks.has(r.id));
+      return `<div class="panel"><h2>Risks</h2><div class="body">${edit ? `<div class="row"><div class="f" style="flex:1"><label>Link an existing risk</label><select data-rl><option value="">Select risk</option>${avail.map((r) => `<option value="${esc(r.id)}">${esc(r.id)} – ${esc(r.title)}${r.assetId ? ' (linked to ' + esc(r.assetId) + ')' : ''}</option>`).join('')}</select></div><button class="btn" data-rlink style="align-self:flex-end">Link Risk</button><button class="btn green" data-rnew style="align-self:flex-end">＋ Raise New Risk</button></div>` : ''}
+        <div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr>${['Risk ID', 'Risk Title', 'Risk Type', 'Risk Priority', 'Risk Owner', 'Risk Action Owner', 'Action'].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.title)}</td><td>${esc(r.type)}</td><td>${esc(r.priority)}</td><td>${esc(r.owner)}</td><td>${esc(r.actionOwner)}</td><td>${edit ? `<a href="#" data-runlink="${esc(r.id)}">Unlink</a>` : `<a href="#/risk/${esc(r.id)}">View</a>`}</td></tr>`).join('') || `<tr><td colspan="7">No risks linked to this asset.${edit ? ' Link an existing risk or raise a new one.' : ''}</td></tr>`}</tbody></table></div></div></div>`;
+    };
     const body = {
-      details: `<div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID')}${AF('title', 'Asset Title')}${typeSel}${AF('loc', 'Location')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('intersection', 'Closest Intersection')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}<div class="f"><label>Risk ID</label>${riskSel('data-ak="riskId"', d.riskId || '', !edit)}</div></div></div></div>
+      details: `<div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID')}${AF('title', 'Asset Title')}${typeSel}${AF('loc', 'Location')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('intersection', 'Closest Intersection')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}</div></div></div>
         <div><div id="amap" class="map" style="height:300px"></div><br><a class="btn" href="#/amd">View Asset Maintenance Data App</a></div></div>`,
       projects: projPanel('inflight', 'In-Flight Projects') + projPanel('future', 'Future Projects'),
+      risks: riskPanel(),
       grants: grantTbl('In-flight Projects based on Grants Approval', grants.filter((g) => g.status === 'Approved')) + grantTbl('Pipeline Grants Submission', grants.filter((g) => g.status !== 'Approved')),
     }[sub];
-    host.innerHTML = `<div class="tbar">${['details', 'projects', 'grants'].map((s) => `<button data-s="${s}" class="${s === sub ? 'on' : ''}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div>${body}${st.footer || ''}`;
+    host.innerHTML = `<div class="tbar">${['details', 'projects', 'risks', 'grants'].map((s) => `<button data-s="${s}" class="${s === sub ? 'on' : ''}">${s === 'risks' ? 'Risk' : s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div>${body}${st.footer || ''}`;
     st.read = () => { if (edit) $$('[data-ak]', host).forEach((i) => { if (i.dataset.ak !== 'id') d[i.dataset.ak] = i.value; }); };
     $$('[data-s]', host).forEach((b) => (b.onclick = () => { st.read(); sessionStorage.setItem('as', b.dataset.s); assetTabs(host, st); }));
     if (sub === 'details') {
@@ -441,12 +452,65 @@
       st[key].add(x.id); assetTabs(host, st);
     }));
     $$('[data-unlink]', host).forEach((b) => (b.onclick = (e) => { e.preventDefault(); st[b.dataset.unlink].delete(b.dataset.id); assetTabs(host, st); }));
+    $$('[data-runlink]', host).forEach((b) => (b.onclick = (e) => { e.preventDefault(); st.risks.delete(b.dataset.runlink); assetTabs(host, st); }));
+    const rl = $('[data-rlink]', host); if (rl) rl.onclick = () => { const v = $('[data-rl]', host).value; if (!v) return toast('Select a risk to link.', 'err'); st.risks.add(v); assetTabs(host, st); };
+    const rn = $('[data-rnew]', host); if (rn) rn.onclick = () => riskModal({ assetId: d.id, type: d.type }, (r) => { st.risks.add(r.id); assetTabs(host, st); });
   }
+  const riskFields = (r) => `<div class="g2 f"><div class="f"><label>Risk ID</label><input value="${esc(r.id || 'Auto-generated on save')}" readonly></div>
+    <div class="f"><label>Risk Title</label><input data-rk="title" value="${esc(r.title || '')}"></div>
+    <div class="f"><label>Risk Type</label><select data-rk="type">${RISK_TYPES.map((o) => `<option ${o === r.type ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+    <div class="f"><label>Risk Priority</label><select data-rk="priority">${PRIORITIES.map((o) => `<option ${o === (r.priority || 'Medium') ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+    <div class="f"><label>Risk Owner</label>${userSel('data-rk="owner"', r.owner)}</div>
+    <div class="f"><label>Risk Action Owner</label>${userSel('data-rk="actionOwner"', r.actionOwner)}</div>
+    <div class="f"><label>Linked Asset</label><select data-rk="assetId"><option value="">None</option>${assets.map((a) => `<option value="${esc(a.id)}" ${a.id === r.assetId ? 'selected' : ''}>${esc(a.id)} – ${esc(a.title)}</option>`).join('')}</select></div></div>`;
+  function readRisk(root, r) {
+    $$('[data-rk]', root).forEach((i) => { r[i.dataset.rk] = i.value; });
+    if (!String(r.title || '').trim()) { toast('Risk Title is required.', 'err'); return false; }
+    if (!r.owner) { toast('Select a Risk Owner.', 'err'); return false; }
+    if (!r.actionOwner) { toast('Select a Risk Action Owner.', 'err'); return false; }
+    return true;
+  }
+  function riskModal(defaults, done) {
+    modal(`<h2>Raise New Risk</h2>${riskFields(defaults)}<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn alt" data-close>Cancel</button><button class="btn" id="rsave">Save</button></div>`, () => {
+      $('#rsave').onclick = () => {
+        const r = { ...defaults, id: nextRiskId() };
+        if (!readRisk($('#modal'), r)) return;
+        RISKS.push(r); saveRisks(); closeModal(); toast('Risk ' + r.id + ' raised.'); done(r);
+      };
+    });
+  }
+  const riskAdv = [['id', 'Risk ID'], ['title', 'Risk Title'], ['type', 'Risk Type'], ['priority', 'Risk Priority'], ['owner', 'Risk Owner'], ['actionOwner', 'Risk Action Owner'], ['assetId', 'Asset ID']];
+  views.risks = () => {
+    const adv = sessionStorage.getItem('radv') === '1', q = (sessionStorage.getItem('rq') || '').toLowerCase(), f = JSON.parse(sessionStorage.getItem('rf') || '{}');
+    let rows = RISKS.filter((r) => !q || Object.values(r).join(' ').toLowerCase().includes(q));
+    Object.entries(f).forEach(([k, v]) => { if (v) rows = rows.filter((r) => String(r[k] ?? '').toLowerCase().includes(v.toLowerCase())); });
+    app.innerHTML = `<h1>List of Risks</h1><div class="row sp"><div class="row search"><input id="q" placeholder="Search risks" value="${esc(sessionStorage.getItem('rq') || '')}"><button class="btn" id="sq">Search</button><button class="btn alt" id="adv">Advanced Search ${adv ? '▲' : '▼'}</button></div><a class="btn green" href="#/risk/new">＋ Raise Risk</a></div>
+    ${adv ? `<div class="panel" style="margin-top:14px"><h2>Advanced Search</h2><div class="body"><div class="g4 f">${riskAdv.map(([k, l]) => `<div><label>${l}</label><input data-f="${k}" value="${esc(f[k] || '')}"></div>`).join('')}</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn alt" id="asCancel">Cancel</button><button class="btn" id="asGo">Search</button></div></div></div>` : ''}
+    <div class="scroll" style="margin-top:16px"><table class="tbl"><thead><tr>${['Risk ID', 'Risk Title', 'Risk Type', 'Risk Priority', 'Risk Owner', 'Risk Action Owner', 'Asset ID', 'Action'].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><td><a href="#/risk/${esc(r.id)}">${esc(r.id)}</a></td><td>${esc(r.title)}</td><td>${esc(r.type)}</td><td>${esc(r.priority)}</td><td>${esc(r.owner)}</td><td>${esc(r.actionOwner)}</td><td>${esc(r.assetId)}</td><td><a href="#/risk/${esc(r.id)}">View</a> | <a href="#/risk/${esc(r.id)}">Edit</a></td></tr>`).join('') || '<tr><td colspan="8">No data found</td></tr>'}</tbody></table></div><p class="muted">Showing ${rows.length} of ${RISKS.length} results</p>`;
+    $('#sq').onclick = () => { sessionStorage.setItem('rq', $('#q').value); views.risks(); };
+    $('#q').onkeydown = (e) => e.key === 'Enter' && $('#sq').click();
+    $('#adv').onclick = () => { sessionStorage.setItem('radv', adv ? '0' : '1'); views.risks(); };
+    if (adv) {
+      $('#asCancel').onclick = () => { sessionStorage.removeItem('rf'); sessionStorage.setItem('radv', '0'); views.risks(); };
+      $('#asGo').onclick = () => { const o = {}; $$('[data-f]').forEach((i) => (o[i.dataset.f] = i.value)); sessionStorage.setItem('rf', JSON.stringify(o)); views.risks(); };
+    }
+  };
+  views.risk = (id) => {
+    const isNew = id === 'new', r = isNew ? { type: 'Road', priority: 'Medium' } : RISKS.find((x) => x.id === decodeURIComponent(id || ''));
+    if (!r) { app.innerHTML = '<h1>Risk not found</h1><a class="btn" href="#/risks">Back</a>'; return; }
+    const copy = { ...r };
+    app.innerHTML = `<h1>${isNew ? 'Raise New Risk' : esc(r.id)}</h1><div class="panel"><div class="body">${riskFields(r)}</div></div><div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn alt" href="#/risks">Cancel</a><button class="btn" id="rsv">Save</button></div>`;
+    $('#rsv').onclick = () => {
+      if (!readRisk(app, copy)) return;
+      if (isNew) { copy.id = nextRiskId(); RISKS.push(copy); } else Object.assign(r, copy);
+      saveRisks(); toast('Risk saved successfully.'); location.hash = '#/risks';
+    };
+  };
   const validCoords = (o) => String(o.lat).trim() !== '' && String(o.lng).trim() !== '' && !isNaN(+o.lat) && !isNaN(+o.lng) && Math.abs(+o.lat) <= 90 && Math.abs(+o.lng) <= 180;
   views.asset = (id) => {
     const a = findAsset(decodeURIComponent(id || ''));
     if (!a) { app.innerHTML = '<h1>Asset not found</h1><a class="btn" href="#/assets">Back</a>'; return; }
-    const st = { edit: true, d: { ...a }, pool: projects, inflight: new Set(a.inflight), future: new Set(a.future) };
+    const st = { edit: true, d: { ...a }, pool: projects, inflight: new Set(a.inflight), future: new Set(a.future), risks: new Set(RISKS.filter((r) => r.assetId === a.id).map((r) => r.id)) };
     app.innerHTML = `<div class="row sp"><h1>${esc(a.title)} <small class="muted">${esc(a.id)}</small></h1><a class="btn alt" href="#/assets">Back to list</a></div><div id="atabs"></div>
       <div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn alt" href="#/assets">Cancel</a><button class="btn" id="saveA">Save</button></div>`;
     assetTabs($('#atabs'), st);
@@ -459,6 +523,7 @@
       assets.forEach((o) => { if (o !== a) { o.inflight = o.inflight.filter((i) => !all.has(i)); o.future = o.future.filter((i) => !all.has(i)); } });
       Object.assign(a, d, { lat: +d.lat, lng: +d.lng, inflight: [...st.inflight], future: [...st.future] }); saveAssets();
       projects.forEach((x) => { if (all.has(x.id)) { x.assetId = a.id; x.assetType = a.type; } else if (x.assetId === a.id) x.assetId = ''; });
+      RISKS.forEach((r) => { if (st.risks.has(r.id)) r.assetId = a.id; else if (r.assetId === a.id) r.assetId = ''; }); saveRisks();
       save(); toast('Asset saved successfully.'); location.hash = '#/assets';
     };
   };
