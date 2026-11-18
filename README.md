@@ -6,3 +6,5 @@ Run locally: serve the `site/` folder, e.g. `python -m http.server -d site 8080`
 Deployed to GitHub Pages from `site/` via `.github/workflows/pages.yml`.
 
 Demo login accepts any credentials. Map tiles © OpenStreetMap contributors (Leaflet).
+
+Assets: menu Assets > List of Assets (ID, title, View/Edit). Projects pick an existing asset (searchable by ID/title) and an asset page links/unlinks projects, with picture, coordinates, suburb/state/postcode and closest intersection. Asset data is mock, stored in localStorage.

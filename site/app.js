@@ -6,7 +6,7 @@
   const app = $('#app');
 
   const seed = () => [
-    mk('PROJ-1234', 'Parramatta Rd Maint', { preGate: 'PRE-23', assetType: 'Road', assetId: 'BIS-9561', riskId: 'RISKHUB-123', agenda: 'JIRA-12345', p50: '12/12/2025', p90: '25/2/2026', slip: 'Yes', gate: 'Gate 2', pm: 'John Doe', score: 7, lat: -33.8150, lng: 151.0011 }),
+    mk('PROJ-1234', 'Parramatta Rd Maint', { preGate: 'PRE-23', assetType: 'Road', assetId: 'RAMS-4410', riskId: 'RISKHUB-123', agenda: 'JIRA-12345', p50: '12/12/2025', p90: '25/2/2026', slip: 'Yes', gate: 'Gate 2', pm: 'John Doe', score: 7, lat: -33.8150, lng: 151.0011 }),
     mk('PROJ-5678', 'Parramatta Bridge Maintenance', { preGate: 'PRE-24', assetType: 'Bridge', assetId: 'BIS-9561', riskId: 'RISKHUB-456', agenda: 'JIRA-12345', p50: '1/3/2026', p90: '30/6/2026', slip: 'No', gate: 'Gate 1', pm: 'Jane Smith', score: 8, lat: -33.8136, lng: 151.0034 }),
   ];
   function mk(id, name, o) {
@@ -23,6 +23,24 @@
         ['M', 'Design', '', '1/4/2026', '30/4/2026', 20], ['M', 'Development & Build', '', '1/5/2026', '30/6/2026', 40], ['S', 'Development', '', '1/5/2026', '15/6/2026', 35],
       ].map(([t, a, b, s, e, d]) => ({ type: t, title: a, sub: b, start: s, end: e, days: d, status: 'NEW' })),
     };
+  }
+  const AKEY = 'pamb.assets.v1';
+  const seedAssets = () => [
+    { id: 'BIS-9561', title: 'Parramatta Bridge', type: 'Bridge', lat: -33.8136, lng: 151.0034, suburb: 'Parramatta', state: 'NSW', postcode: '2150', intersection: 'Church St & Macquarie St' },
+    { id: 'RAMS-4410', title: 'Parramatta Road', type: 'Road', lat: -33.8150, lng: 151.0011, suburb: 'Granville', state: 'NSW', postcode: '2142', intersection: 'Parramatta Rd & Good St' },
+    { id: 'BIS-1234', title: 'Hawkesbury River Bridge', type: 'Bridge', lat: -33.5446, lng: 151.1359, suburb: 'Brooklyn', state: 'NSW', postcode: '2083', intersection: 'Pacific Hwy & Brooklyn Rd' },
+    { id: 'RAMS-1234', title: 'Pacific Highway Newcastle', type: 'Road', lat: -32.9283, lng: 151.7817, suburb: 'Newcastle', state: 'NSW', postcode: '2300', intersection: 'Pacific Hwy & Hunter St' },
+  ];
+  let assets;
+  try { assets = JSON.parse(localStorage.getItem(AKEY)) || seedAssets(); } catch { assets = seedAssets(); }
+  const saveAssets = () => localStorage.setItem(AKEY, JSON.stringify(assets));
+  const findAsset = (id) => assets.find((a) => a.id.toLowerCase() === String(id || '').trim().toLowerCase());
+  const assetSvg = (t) => t === 'Bridge'
+    ? '<svg viewBox="0 0 400 220" role="img" aria-label="Bridge"><rect width="400" height="220" fill="#cfe3f5"/><rect y="150" width="400" height="70" fill="#5b86b0"/><path d="M0 110 Q200 20 400 110" stroke="#1b2a52" stroke-width="8" fill="none"/><rect x="0" y="108" width="400" height="12" fill="#444"/>' + [60, 120, 180, 240, 300, 360].map((x) => `<line x1="${x}" y1="${108 - 70 * Math.sin(x / 400 * Math.PI) * 0.9 + 2}" x2="${x}" y2="110" stroke="#1b2a52" stroke-width="3"/>`).join('') + '<rect x="80" y="120" width="12" height="60" fill="#777"/><rect x="308" y="120" width="12" height="60" fill="#777"/></svg>'
+    : '<svg viewBox="0 0 400 220" role="img" aria-label="Road"><rect width="400" height="220" fill="#bcd9f0"/><rect y="110" width="400" height="110" fill="#6aa86a"/><polygon points="170,110 230,110 400,220 0,220" fill="#444"/><polygon points="196,110 204,110 220,220 180,220" fill="#fff" opacity=".85"/></svg>';
+  function assetPicker(p) {
+    const cur = findAsset(p.assetId);
+    return `<div class="f"><label>Asset (search by ID or title, e.g. BIS-1234, RAMS-1234)</label><input data-k="assetId" list="assetlist" autocomplete="off" placeholder="Search assets…" value="${esc(p.assetId)}"><datalist id="assetlist">${assets.map((a) => `<option value="${esc(a.id)}">${esc(a.title)}</option>`).join('')}</datalist>${cur ? `<div class="muted" style="margin-top:4px">${esc(cur.title)} · <a href="#/asset/${esc(cur.id)}">View asset</a></div>` : ''}</div>`;
   }
   let projects;
   try { projects = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { projects = seed(); }
@@ -43,6 +61,7 @@
   const userSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.5"/><path d="M3 21c0-5 4-7 9-7s9 2 9 7z"/></svg>';
   const MENU = [
     ['Projects', [['List of Projects', '#/projects'], ['Create Project', '#/new']]],
+    ['Assets', [['List of Assets', '#/assets']]],
     ['Grants', [['List of Grants', '#/list/grants']]],
     ['Document Compliance', [['List of Documents', '#/list/documents']]],
     ['Regional Map', [['Regional Map', '#/map']]],
@@ -178,6 +197,11 @@
     const b = $('#save'); if (!b) return;
     b.onclick = () => {
       collect(p);
+      if (p.assetId) {
+        const a = findAsset(p.assetId);
+        if (!a) { toast('Asset not found. Pick an existing asset ID.', 'err'); return; }
+        p.assetId = a.id; p.assetType = a.type;
+      }
       if (isNew) {
         if (!p.name || !p.id) { toast('Project Name and Gated Project ID are required.', 'err'); return; }
         if (projects.some((x) => x.id === p.id)) { toast('A project with that ID already exists.', 'err'); return; }
@@ -194,7 +218,7 @@
       <div class="f"><label>Pre-Gate Project ID</label><div class="inl"><input data-k="preChk" type="checkbox" ${p.preChk ? 'checked' : ''}><input data-k="preGate" value="${esc(p.preGate)}"><span class="tick">✔</span></div></div><br>
       <div class="f"><label>Gated Project ID</label><div class="inl"><input data-k="gatedChk" type="checkbox" ${p.gatedChk ? 'checked' : ''}><input data-k="id" value="${esc(p.id)}" ${isNew ? '' : 'readonly'}><span class="tick">✔</span></div></div><br>
       <div class="f"><label>Asset Type</label><select data-k="assetType">${['', 'Road', 'Bridge', 'Rail', 'Maritime'].map((o) => `<option ${o === p.assetType ? 'selected' : ''}>${o}</option>`).join('')}</select></div><br>
-      ${F('assetId', 'Asset ID', p.assetId)}<br>${F('riskId', 'Risk ID', p.riskId)}<br>
+      ${assetPicker(p)}<br>${F('riskId', 'Risk ID', p.riskId)}<br>
       <div class="f"><label>Ministerial Agenda</label><div class="inl"><input data-k="agenda" value="${esc(p.agenda)}"><button class="btn sm" id="play" title="Open agenda">▶</button></div></div>
       </div></div><div><div id="map" class="map"></div>
       ${isNew ? `<div class="row f" style="margin-top:10px"><div><label>Longitude</label><input id="lng" type="number" step="any" value="${p.lng}"></div><div><label>Latitude</label><input id="lat" type="number" step="any" value="${p.lat}"></div><button class="btn" id="plot" style="align-self:flex-end">Plot on Map</button></div>` : '<p class="muted">Live traffic map (OpenStreetMap).</p>'}</div></div>${saveBar(p, isNew)}`;
@@ -207,7 +231,7 @@
       const sub = sessionStorage.getItem('as') || 'details';
       const inflight = projects.filter((x) => x.assetId === p.assetId);
       const body = {
-        details: `<div class="cols"><div><div class="panel"><h2>Asset Identification</h2><div class="body g2 f">${F('assetName', 'Asset Name', p.assetName || 'Parramatta Bridge')}${F('assetId', 'Asset ID', p.assetId)}<div><label>Location</label><select><option>Parramatta</option><option>Newcastle</option><option>Sydney</option></select></div>${F('lga', 'LGA', p.lga || 'City of Parramatta')}</div></div>
+        details: `<div class="cols"><div><div class="panel"><h2>Asset Identification</h2><div class="body g2 f">${F('assetName', 'Asset Name', (findAsset(p.assetId) || {}).title || p.assetName || '')}${F('assetId', 'Asset ID', p.assetId)}<div><label>Location</label><select><option>Parramatta</option><option>Newcastle</option><option>Sydney</option></select></div>${F('lga', 'LGA', p.lga || 'City of Parramatta')}</div></div>
           <div class="panel"><h2>Additional Details</h2><div class="body g2 f">${F('built', 'Year Built', p.built || '1965')}${F('cond', 'Condition', p.cond || 'Fair')}</div></div>
           <div class="panel"><h2>Asset Description</h2><div class="body"><textarea data-k="assetDesc">${esc(p.assetDesc || 'Concrete road bridge over the Parramatta River.')}</textarea></div></div></div>
           <div><div class="map" style="height:240px;background:linear-gradient(135deg,#8aa6c8,#cfd9e6);display:grid;place-items:center;font-size:60px">🌉</div><br><a class="btn" href="#/amd">View Asset Maintenance Data App</a></div></div>`,
@@ -320,6 +344,45 @@
   views.survey = (id) => {
     app.innerHTML = `<div class="panel" style="max-width:560px;margin:20px auto"><h2>Customer Satisfaction Survey (${esc(id)})</h2><div class="body f"><label>Overall satisfaction</label><select><option>5 – Very satisfied</option><option>4</option><option>3</option><option>2</option><option>1 – Very dissatisfied</option></select><br><br><label>Comments</label><textarea></textarea><br><br><button class="btn" id="ok">Submit</button></div></div>`;
     $('#ok').onclick = () => { toast('Thank you for your feedback.'); location.hash = '#/'; };
+  };
+
+  views.assets = () => {
+    const q = (sessionStorage.getItem('aq') || '').toLowerCase();
+    const rows = assets.filter((a) => !q || (a.id + a.title).toLowerCase().includes(q));
+    app.innerHTML = `<h1>List of Assets</h1><div class="row search"><input id="q" placeholder="Search by Asset ID or title" value="${esc(sessionStorage.getItem('aq') || '')}"><button class="btn" id="sq">Search</button></div>
+    <div class="scroll" style="margin-top:16px"><table class="tbl"><thead><tr><th>Asset ID</th><th>Asset Title</th><th>Action</th></tr></thead><tbody>${rows.map((a) => `<tr><td><a href="#/asset/${esc(a.id)}">${esc(a.id)}</a></td><td>${esc(a.title)}</td><td><a href="#/asset/${esc(a.id)}">View</a> | <a href="#/asset/${esc(a.id)}/edit">Edit</a></td></tr>`).join('') || '<tr><td colspan="3">No data found</td></tr>'}</tbody></table></div><p class="muted">Showing ${rows.length} of ${assets.length} results</p>`;
+    $('#sq').onclick = () => { sessionStorage.setItem('aq', $('#q').value); views.assets(); };
+    $('#q').onkeydown = (e) => e.key === 'Enter' && $('#sq').click();
+  };
+  views.asset = (id, mode) => {
+    const a = findAsset(decodeURIComponent(id || ''));
+    if (!a) { app.innerHTML = '<h1>Asset not found</h1><a class="btn" href="#/assets">Back</a>'; return; }
+    const ed = mode === 'edit', ro = ed ? '' : 'readonly disabled';
+    const AF = (k, l) => `<div class="f"><label>${l}</label><input data-ak="${k}" value="${esc(a[k])}" ${ro}></div>`;
+    const linked = () => projects.filter((x) => x.assetId === a.id);
+    const draw = () => {
+      const lp = linked(), avail = projects.filter((x) => x.assetId !== a.id);
+      app.innerHTML = `<div class="row sp"><h1>${esc(a.title)} <small class="muted">${esc(a.id)}</small></h1><div class="row">${ed ? '' : `<a class="btn alt" href="#/asset/${esc(a.id)}/edit">Edit</a>`}<a class="btn alt" href="#/assets">Back to list</a></div></div>
+      <div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID').replace('data-ak="id"', 'data-ak="id" readonly')}${AF('title', 'Asset Title')}${AF('type', 'Asset Type')}${AF('intersection', 'Closest Intersection')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}</div></div>
+      ${ed ? '<div class="row" style="justify-content:flex-end"><a class="btn alt" href="#/asset/' + esc(a.id) + '">Cancel</a><button class="btn" id="saveA">Save</button></div>' : ''}</div>
+      <div><div class="panel"><h2>Picture</h2><div class="body">${assetSvg(a.type)}</div></div><div id="amap" class="map" style="height:220px"></div></div></div>
+      <div class="panel"><h2>Linked Projects</h2><div class="body"><div class="row"><div class="f" style="flex:1"><label>Link an existing project (search by name or ID)</label><input id="lp" list="plist" autocomplete="off" placeholder="Search projects…"><datalist id="plist">${avail.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</datalist></div><button class="btn" id="linkP" style="align-self:flex-end">Link Project</button></div>
+      <div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr><th>Project Name</th><th>Project ID</th><th>Gate Status</th><th>PM</th><th>Action</th></tr></thead><tbody>${lp.map((x) => `<tr><td><a href="#/project/${x.id}/project">${esc(x.name)}</a></td><td>${esc(x.id)}</td><td>${esc(x.gate)}</td><td>${esc(x.pm)}</td><td><button class="btn sm alt" data-un="${x.id}">Unlink</button></td></tr>`).join('') || '<tr><td colspan="5">No linked projects</td></tr>'}</tbody></table></div></div></div>`;
+      const m = L.map('amap').setView([+a.lat, +a.lng], 15); tiles(m); L.marker([+a.lat, +a.lng]).addTo(m);
+      $('#linkP').onclick = () => {
+        const v = $('#lp').value.trim().toLowerCase();
+        const x = projects.find((y) => y.id.toLowerCase() === v || y.name.toLowerCase() === v);
+        if (!x) return toast('Project not found. Pick an existing project.', 'err');
+        x.assetId = a.id; x.assetType = a.type; save(); toast(`Linked ${x.id} to ${a.id}.`); draw();
+      };
+      $$('[data-un]').forEach((b) => (b.onclick = () => { projects.find((y) => y.id === b.dataset.un).assetId = ''; save(); toast('Project unlinked.'); draw(); }));
+      if (ed) $('#saveA').onclick = () => {
+        $$('[data-ak]').forEach((i) => { if (i.dataset.ak !== 'id') a[i.dataset.ak] = i.value; });
+        if (isNaN(+a.lat) || isNaN(+a.lng) || Math.abs(+a.lat) > 90 || Math.abs(+a.lng) > 180) return toast('Invalid coordinates.', 'err');
+        a.lat = +a.lat; a.lng = +a.lng; saveAssets(); toast('Asset saved successfully.'); location.hash = `#/asset/${a.id}`;
+      };
+    };
+    draw();
   };
 
   function route() {
