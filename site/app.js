@@ -354,34 +354,42 @@
     $('#sq').onclick = () => { sessionStorage.setItem('aq', $('#q').value); views.assets(); };
     $('#q').onkeydown = (e) => e.key === 'Enter' && $('#sq').click();
   };
-  views.asset = (id, mode) => {
+  views.asset = (id) => {
     const a = findAsset(decodeURIComponent(id || ''));
     if (!a) { app.innerHTML = '<h1>Asset not found</h1><a class="btn" href="#/assets">Back</a>'; return; }
-    const ed = mode === 'edit', ro = ed ? '' : 'readonly disabled';
-    const AF = (k, l) => `<div class="f"><label>${l}</label><input data-ak="${k}" value="${esc(a[k])}" ${ro}></div>`;
-    const linked = () => projects.filter((x) => x.assetId === a.id);
+    const d = { ...a }, ed = true;
+    const links = new Set(projects.filter((x) => x.assetId === a.id).map((x) => x.id));
+    const AF = (k, l) => `<div class="f"><label>${l}</label><input data-ak="${k}" value="${esc(d[k])}" ${k === 'id' ? 'readonly' : ''}></div>`;
+    const readDraft = () => $$('[data-ak]').forEach((i) => { if (i.dataset.ak !== 'id') d[i.dataset.ak] = i.value; });
     const draw = () => {
-      const lp = linked(), avail = projects.filter((x) => x.assetId !== a.id);
-      app.innerHTML = `<div class="row sp"><h1>${esc(a.title)} <small class="muted">${esc(a.id)}</small></h1><div class="row">${ed ? '' : `<a class="btn alt" href="#/asset/${esc(a.id)}/edit">Edit</a>`}<a class="btn alt" href="#/assets">Back to list</a></div></div>
-      <div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID').replace('data-ak="id"', 'data-ak="id" readonly')}${AF('title', 'Asset Title')}${AF('type', 'Asset Type')}${AF('intersection', 'Closest Intersection')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}</div></div>
-      ${ed ? '<div class="row" style="justify-content:flex-end"><a class="btn alt" href="#/asset/' + esc(a.id) + '">Cancel</a><button class="btn" id="saveA">Save</button></div>' : ''}</div>
-      <div><div class="panel"><h2>Picture</h2><div class="body">${assetSvg(a.type)}</div></div><div id="amap" class="map" style="height:220px"></div></div></div>
+      const lp = projects.filter((x) => links.has(x.id)), avail = projects.filter((x) => !links.has(x.id));
+      app.innerHTML = `<div class="row sp"><h1>${esc(a.title)} <small class="muted">${esc(a.id)}</small></h1><a class="btn alt" href="#/assets">Back to list</a></div>
+      <div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID')}${AF('title', 'Asset Title')}${AF('type', 'Asset Type')}${AF('intersection', 'Closest Intersection')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}</div></div>
+      </div>
+      <div><div class="panel"><h2>Picture</h2><div class="body">${assetSvg(d.type)}</div></div><div id="amap" class="map" style="height:220px"></div></div></div>
       <div class="panel"><h2>Linked Projects</h2><div class="body"><div class="row"><div class="f" style="flex:1"><label>Link an existing project (search by name or ID)</label><input id="lp" list="plist" autocomplete="off" placeholder="Search projects…"><datalist id="plist">${avail.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</datalist></div><button class="btn" id="linkP" style="align-self:flex-end">Link Project</button></div>
-      <div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr><th>Project Name</th><th>Project ID</th><th>Gate Status</th><th>PM</th><th>Action</th></tr></thead><tbody>${lp.map((x) => `<tr><td><a href="#/project/${x.id}/project">${esc(x.name)}</a></td><td>${esc(x.id)}</td><td>${esc(x.gate)}</td><td>${esc(x.pm)}</td><td><button class="btn sm alt" data-un="${x.id}">Unlink</button></td></tr>`).join('') || '<tr><td colspan="5">No linked projects</td></tr>'}</tbody></table></div></div></div>`;
-      const m = L.map('amap').setView([+a.lat, +a.lng], 15); tiles(m); L.marker([+a.lat, +a.lng]).addTo(m);
+      <div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr><th>Project Name</th><th>Project ID</th><th>Gate Status</th><th>PM</th><th>Action</th></tr></thead><tbody>${lp.map((x) => `<tr><td><a href="#/project/${x.id}/project">${esc(x.name)}</a></td><td>${esc(x.id)}</td><td>${esc(x.gate)}</td><td>${esc(x.pm)}</td><td><button class="btn sm alt" data-un="${x.id}">Unlink</button></td></tr>`).join('') ||       '<tr><td colspan="5">No linked projects</td></tr>'}</tbody></table></div></div></div>
+            <div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn alt" href="#/assets">Cancel</a><button class="btn" id="saveA">Save</button></div>`;
+            const ok = !isNaN(+d.lat) && !isNaN(+d.lng) && Math.abs(+d.lat) <= 90 && Math.abs(+d.lng) <= 180;
+            const m = L.map('amap').setView(ok ? [+d.lat, +d.lng] : [-33.87, 151.21], 15); tiles(m); if (ok) L.marker([+d.lat, +d.lng]).addTo(m);
       $('#linkP').onclick = () => {
+              readDraft();
         const v = $('#lp').value.trim().toLowerCase();
         const x = projects.find((y) => y.id.toLowerCase() === v || y.name.toLowerCase() === v);
         if (!x) return toast('Project not found. Pick an existing project.', 'err');
-        x.assetId = a.id; x.assetType = a.type; save(); toast(`Linked ${x.id} to ${a.id}.`); draw();
+              links.add(x.id); draw();
       };
-      $$('[data-un]').forEach((b) => (b.onclick = () => { projects.find((y) => y.id === b.dataset.un).assetId = ''; save(); toast('Project unlinked.'); draw(); }));
-      if (ed) $('#saveA').onclick = () => {
-        $$('[data-ak]').forEach((i) => { if (i.dataset.ak !== 'id') a[i.dataset.ak] = i.value; });
-        if (isNaN(+a.lat) || isNaN(+a.lng) || Math.abs(+a.lat) > 90 || Math.abs(+a.lng) > 180) return toast('Invalid coordinates.', 'err');
-        a.lat = +a.lat; a.lng = +a.lng; saveAssets(); toast('Asset saved successfully.'); location.hash = `#/asset/${a.id}`;
+            $$('[data-un]').forEach((b) => (b.onclick = () => { readDraft(); links.delete(b.dataset.un); draw(); }));
+            $('#saveA').onclick = () => {
+              readDraft();
+              if (!d.title.trim()) return toast('Asset Title is required.', 'err');
+              if (!ok2(d)) return toast('Invalid coordinates.', 'err');
+              Object.assign(a, d, { lat: +d.lat, lng: +d.lng }); saveAssets();
+              projects.forEach((x) => { if (links.has(x.id)) { x.assetId = a.id; x.assetType = a.type; } else if (x.assetId === a.id) x.assetId = ''; });
+              save(); toast('Asset saved successfully.'); location.hash = '#/assets';
       };
     };
+          const ok2 = (o) => String(o.lat).trim() !== '' && String(o.lng).trim() !== '' && !isNaN(+o.lat) && !isNaN(+o.lng) && Math.abs(+o.lat) <= 90 && Math.abs(+o.lng) <= 180;
     draw();
   };
 
