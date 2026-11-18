@@ -169,7 +169,19 @@
     soon(name) { app.innerHTML = `<h1>${esc(decodeURIComponent(name))}</h1><p class="muted">This module is not part of the current design.</p><a class="btn" href="#/tiles">Back</a>`; },
     list(k) {
       const d = LISTS[k]; if (!d) return views.soon(k);
-      app.innerHTML = `<h1>${d[0]}</h1><div class="scroll"><table class="tbl"><thead><tr>${d[1].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${d[2].map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p class="muted">Showing ${d[2].length} of ${d[2].length} results</p>`;
+      const adv = sessionStorage.getItem(k + 'adv') === '1', q = (sessionStorage.getItem(k + 'q') || '').toLowerCase(), f = JSON.parse(sessionStorage.getItem(k + 'f') || '{}');
+      let rows = d[2].filter((r) => !q || r.join(' ').toLowerCase().includes(q));
+      Object.entries(f).forEach(([i, v]) => { if (v) rows = rows.filter((r) => String(r[i]).toLowerCase().includes(v.toLowerCase())); });
+      app.innerHTML = `<h1>${d[0]}</h1><div class="row search"><input id="q" placeholder="Search ${esc(d[0].replace('List of ', '').toLowerCase())}" value="${esc(sessionStorage.getItem(k + 'q') || '')}"><button class="btn" id="sq">Search</button><button class="btn alt" id="adv">Advanced Search ${adv ? '▲' : '▼'}</button></div>
+      ${adv ? `<div class="panel" style="margin-top:14px"><h2>Advanced Search</h2><div class="body"><div class="g4 f">${d[1].map((h, i) => `<div><label>${h}</label><input data-f="${i}" value="${esc(f[i] || '')}"></div>`).join('')}</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn alt" id="asCancel">Cancel</button><button class="btn" id="asGo">Search</button></div></div></div>` : ''}
+      <div class="scroll" style="margin-top:16px"><table class="tbl"><thead><tr>${d[1].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${d[1].length}">No data found</td></tr>`}</tbody></table></div><p class="muted">Showing ${rows.length} of ${d[2].length} results</p>`;
+      $('#sq').onclick = () => { sessionStorage.setItem(k + 'q', $('#q').value); views.list(k); };
+      $('#q').onkeydown = (e) => e.key === 'Enter' && $('#sq').click();
+      $('#adv').onclick = () => { sessionStorage.setItem(k + 'adv', adv ? '0' : '1'); views.list(k); };
+      if (adv) {
+        $('#asCancel').onclick = () => { sessionStorage.removeItem(k + 'f'); sessionStorage.setItem(k + 'adv', '0'); views.list(k); };
+        $('#asGo').onclick = () => { const o = {}; $$('[data-f]').forEach((i) => (o[i.dataset.f] = i.value)); sessionStorage.setItem(k + 'f', JSON.stringify(o)); views.list(k); };
+      }
     },
     contact() { app.innerHTML = '<h1>Contact Us</h1><p>Email: pamb-support@transport.nsw.gov.au (demo)</p>'; },
     help() { app.innerHTML = '<h1>Help</h1><p>Use the tiles to open Transport Assets → Projects. Open a project to view its Project, Asset, Benefits, Risk, Financial, Schedule and Audit tabs.</p>'; },
