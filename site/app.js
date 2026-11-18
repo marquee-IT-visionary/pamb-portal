@@ -409,11 +409,21 @@
 
   views.assets = () => {
     const q = (sessionStorage.getItem('aq') || '').toLowerCase();
-    const rows = assets.filter((a) => !q || (a.id + a.title + a.loc + a.suburb + typePlural(a.type)).toLowerCase().includes(q));
-    app.innerHTML = `<h1>List of Assets</h1><div class="row search"><input id="q" placeholder="Search by Asset ID, title, location or suburb" value="${esc(sessionStorage.getItem('aq') || '')}"><button class="btn" id="sq">Search</button></div>
+    const adv = sessionStorage.getItem('aadv') === '1', f = JSON.parse(sessionStorage.getItem('af') || '{}');
+    const val = { id: (a) => a.id, type: (a) => typePlural(a.type), title: (a) => a.title, loc: (a) => a.loc, suburb: (a) => a.suburb };
+    let rows = assets.filter((a) => !q || (a.id + a.title + a.loc + a.suburb + typePlural(a.type)).toLowerCase().includes(q));
+    Object.entries(f).forEach(([k, v]) => { if (v) rows = rows.filter((a) => String(val[k](a) ?? '').toLowerCase().includes(v.toLowerCase())); });
+    const advF = [['id', 'Asset ID'], ['type', 'Asset Type'], ['title', 'Asset Title'], ['loc', 'Location'], ['suburb', 'Suburb']];
+    app.innerHTML = `<h1>List of Assets</h1><div class="row search"><input id="q" placeholder="Search by Asset ID, title, location or suburb" value="${esc(sessionStorage.getItem('aq') || '')}"><button class="btn" id="sq">Search</button><button class="btn alt" id="adv">Advanced Search ${adv ? '▲' : '▼'}</button></div>
+    ${adv ? `<div class="panel" style="margin-top:14px"><h2>Advanced Search</h2><div class="body"><div class="g4 f">${advF.map(([k, l]) => `<div><label>${l}</label><input data-f="${k}" value="${esc(f[k] || '')}"></div>`).join('')}</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn alt" id="asCancel">Cancel</button><button class="btn" id="asGo">Search</button></div></div></div>` : ''}
     <div class="scroll" style="margin-top:16px"><table class="tbl"><thead><tr><th>Asset ID</th><th>Asset Type</th><th>Asset Title</th><th>Location</th><th>Suburb</th><th>Action</th></tr></thead><tbody>${rows.map((a) => `<tr><td><a href="#/asset/${esc(a.id)}">${esc(a.id)}</a></td><td>${esc(typePlural(a.type))}</td><td>${esc(a.title)}</td><td>${esc(a.loc)}</td><td>${esc(a.suburb)}</td><td><a href="#/asset/${esc(a.id)}">View</a> | <a href="#/asset/${esc(a.id)}">Edit</a></td></tr>`).join('') || '<tr><td colspan="6">No data found</td></tr>'}</tbody></table></div><p class="muted">Showing ${rows.length} of ${assets.length} results</p>`;
     $('#sq').onclick = () => { sessionStorage.setItem('aq', $('#q').value); views.assets(); };
     $('#q').onkeydown = (e) => e.key === 'Enter' && $('#sq').click();
+    $('#adv').onclick = () => { sessionStorage.setItem('aadv', adv ? '0' : '1'); views.assets(); };
+    if (adv) {
+      $('#asCancel').onclick = () => { sessionStorage.removeItem('af'); sessionStorage.setItem('aadv', '0'); views.assets(); };
+      $('#asGo').onclick = () => { const o = {}; $$('[data-f]').forEach((i) => (o[i.dataset.f] = i.value)); sessionStorage.setItem('af', JSON.stringify(o)); views.assets(); };
+    }
   };
   function assetTabs(host, st) {
     const { d, edit } = st, sub = sessionStorage.getItem('as') || 'details';
