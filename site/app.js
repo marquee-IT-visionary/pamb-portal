@@ -5,17 +5,43 @@
   const KEY = 'pamb.projects.v1', AUTH = 'pamb.user';
   const app = $('#app');
 
-  const seed = () => [
-    mk('PROJ-1234', 'Parramatta Rd Maint', { preGate: 'PRE-23', assetType: 'Road', assetId: 'RAMS-4410', riskId: 'RISKHUB-123', agenda: 'JIRA-12345', p50: '12/12/2025', p90: '25/2/2026', slip: 'Yes', gate: 'Gate 2', pm: 'John Doe', score: 7, lat: -33.8150, lng: 151.0011 }),
-    mk('PROJ-5678', 'Parramatta Bridge Maintenance', { preGate: 'PRE-24', assetType: 'Bridge', assetId: 'BIS-9561', riskId: 'RISKHUB-456', agenda: 'JIRA-12345', p50: '1/3/2026', p90: '30/6/2026', slip: 'No', gate: 'Gate 1', pm: 'Jane Smith', score: 8, lat: -33.8136, lng: 151.0034 }),
+  const RISKS = [
+    ['RISK-1', 'Structural fatigue', 'BIS-9561', 'Safety', 'John Doe', 'Open'],
+    ['RISK-2', 'Scour at piers', 'BIS-1234', 'Environmental', 'Jane Smith', 'Open'],
+    ['RISK-3', 'Pavement deterioration', 'RAMS-4410', 'Safety', 'John Doe', 'Open'],
+    ['RISK-4', 'Drainage failure', 'RAMS-1234', 'Environmental', 'Jane Smith', 'Open'],
+    ['RISK-5', 'Heavy vehicle overload', 'RAMS-2210', 'Safety', 'John Doe', 'Open'],
   ];
+  const riskTitle = (id) => (RISKS.find((r) => r[0] === id) || [])[1] || '';
+  const riskSel = (attr, cur, dis) => `<select ${attr} ${dis ? 'disabled' : ''}><option value="">None</option>${RISKS.map(([id, t]) => `<option value="${id}" ${id === cur ? 'selected' : ''}>${id} – ${esc(t)}</option>`).join('')}${cur && !riskTitle(cur) ? `<option selected>${esc(cur)}</option>` : ''}</select>`;
+  const seed = () => [
+    mk('PROJ-1234', 'Parramatta Rd Maint', { gated: true, preGate: 'PRE-23', assetType: 'Road', assetId: 'RAMS-4410', riskId: 'RISK-3', agenda: 'JIRA-12345', p50: '12/12/2025', p90: '25/2/2026', slip: 'Yes', gate: 'Gate 2', pm: 'John Doe', score: 7, lat: -33.8150, lng: 151.0011 }),
+    mk('PROJ-5678', 'Parramatta Bridge Maintenance', { gated: true, preGate: 'PRE-24', assetType: 'Bridge', assetId: 'BIS-9561', riskId: 'RISK-1', agenda: 'JIRA-12345', p50: '1/3/2026', p90: '30/6/2026', slip: 'No', gate: 'Gate 1', pm: 'Jane Smith', score: 8, lat: -33.8136, lng: 151.0034 }),
+  ];
+  function seedExtra() {
+    return [
+      mk('Pre-Gate-1', 'Hawkesbury River Bridge Deck Repair', { preGate: 'Pre-Gate-1', assetType: 'Bridge', assetId: 'BIS-1234', riskId: 'RISK-2', lat: -33.5446, lng: 151.1359 }),
+      mk('Pre-Gate-2', 'Pacific Highway Newcastle Resurfacing', { preGate: 'Pre-Gate-2', assetType: 'Road', assetId: 'RAMS-1234', riskId: 'RISK-4', lat: -32.9283, lng: 151.7817 }),
+      mk('Pre-Gate-3', 'Epping Road Pavement Maintenance', { preGate: 'Pre-Gate-3', assetType: 'Road', assetId: 'RAMS-2210', riskId: 'RISK-5', lat: -33.7769, lng: 151.1180 }),
+      mk('PROJ-111', 'Parramatta Bridge Bearing Replacement', { gated: true, preGate: 'PRE-111', assetType: 'Bridge', assetId: 'BIS-9561', riskId: 'RISK-1', p50: '1/7/2026', p90: '30/11/2026', slip: 'No', gate: 'Gate 2', pm: 'Jane Smith', score: 9, lat: -33.8136, lng: 151.0034 }),
+      mk('PROJ-112', 'Parramatta Road Pavement Rehabilitation', { gated: true, preGate: 'PRE-112', assetType: 'Road', assetId: 'RAMS-4410', riskId: 'RISK-3', p50: '1/8/2026', p90: '15/12/2026', slip: 'Yes', gate: 'Gate 1', pm: 'John Doe', score: 6, lat: -33.8150, lng: 151.0011 }),
+      mk('PROJ-113', 'Hawkesbury Bridge Scour Protection', { gated: true, preGate: 'PRE-113', assetType: 'Bridge', assetId: 'BIS-1234', riskId: 'RISK-2', p50: '1/9/2026', p90: '28/2/2027', slip: 'No', gate: 'Gate 2', pm: 'Jane Smith', score: 8, lat: -33.5446, lng: 151.1359 }),
+    ];
+  }
+  const SEED_LINKS = {
+    'BIS-9561': { inflight: ['PROJ-5678', 'PROJ-111'], future: [] },
+    'RAMS-4410': { inflight: ['PROJ-1234', 'PROJ-112'], future: [] },
+    'BIS-1234': { inflight: ['PROJ-113'], future: ['Pre-Gate-1'] },
+    'RAMS-1234': { inflight: [], future: ['Pre-Gate-2'] },
+    'RAMS-2210': { inflight: [], future: ['Pre-Gate-3'] },
+  };
   function mk(id, name, o) {
     return {
-      id, name, preGate: o.preGate || '', preChk: true, gatedChk: true, assetType: o.assetType || '', assetId: o.assetId || '', riskId: o.riskId || '',
+      id, name, preGate: o.preGate || '', gated: !!o.gated, prereq: !!o.gated, gatedId: o.gated ? id : '', preChk: true, gatedChk: true, assetType: o.assetType || '', assetId: o.assetId || '', riskId: o.riskId || '',
       agenda: o.agenda || '', lat: o.lat ?? -33.8688, lng: o.lng ?? 151.2093, p50: o.p50 || '', p90: o.p90 || '', slip: o.slip || 'No', gate: o.gate || 'Pre-Gate 0',
       pm: o.pm || '', score: o.score ?? '', created: '2025-12-01', active: 'Yes', council: 'No', focus: 'Maintenance', wbs: 'WBS-001',
       benefits: { identification: ['Address lack of maintenance for the last few years', 'Address concerns raised by the public'], analysis: ['Address lack of maintenance for the last few years', 'Address concerns raised by the public'], delivery: ['Address lack of maintenance for the last few years', 'Address concerns raised by the public'], transition: [], sustainment: [] },
-      risk: { title: 'Structural fatigue', rid: o.riskId || '', asset: o.assetId || '', cat: 'Safety', owner: o.pm || '', created: '01/12/2025', due: '30/06/2026', status: 'Open', action: '', comment: '' },
+      risk: { title: riskTitle(o.riskId), rid: o.riskId || '', asset: o.assetId || '', cat: 'Safety', owner: o.pm || '', created: '01/12/2025', due: '30/06/2026', status: 'Open', action: '', comment: '' },
       fin: { code: 'PC-100', wo: 'WO-2001', wbs: 'WBS-001', po: 'PO-7788', total: 750000, fy: 'FY26', spent: 550000 },
       docs: [{ name: 'Project_estimate.pdf', date: '15/12/2025' }, { name: 'Design v11.pdf', date: '15/12/2025' }],
       schedule: [
@@ -26,11 +52,11 @@
   }
   const AKEY = 'pamb.assets.v1';
   const seedAssets = () => [
-    { id: 'BIS-9561', title: 'Parramatta Bridge', type: 'Bridge', loc: 'Parramatta', lat: -33.8136, lng: 151.0034, suburb: 'Parramatta', state: 'NSW', postcode: '2150', intersection: 'Church St & Macquarie St', grants: [{ name: 'Parramatta Bridge Renewal', id: 'GR-1001', status: 'Approved' }] },
-    { id: 'RAMS-4410', title: 'Parramatta Road', type: 'Road', loc: 'Parramatta', lat: -33.8150, lng: 151.0011, suburb: 'Granville', state: 'NSW', postcode: '2142', intersection: 'Parramatta Rd & Good St', grants: [] },
-    { id: 'BIS-1234', title: 'Hawkesbury River Bridge', type: 'Bridge', loc: 'Hawkesbury', lat: -33.5446, lng: 151.1359, suburb: 'Brooklyn', state: 'NSW', postcode: '2083', intersection: 'Pacific Hwy & Brooklyn Rd', grants: [{ name: 'Hawkesbury Bridge Strengthening', id: 'GR-1003', status: 'Submitted' }] },
-    { id: 'RAMS-1234', title: 'Pacific Highway Newcastle', type: 'Road', loc: 'Newcastle', lat: -32.9283, lng: 151.7817, suburb: 'Newcastle', state: 'NSW', postcode: '2300', intersection: 'Pacific Hwy & Hunter St', grants: [{ name: 'Newcastle Road Resheeting', id: 'GR-1002', status: 'Submitted' }] },
-    { id: 'RAMS-2210', title: 'Epping Road Macquarie Park', type: 'Road', loc: 'Mac Park', lat: -33.7769, lng: 151.1180, suburb: 'Macquarie Park', state: 'NSW', postcode: '2113', intersection: 'Epping Rd & Herring Rd', grants: [] },
+    { id: 'BIS-9561', title: 'Parramatta Bridge', type: 'Bridge', riskId: 'RISK-1', loc: 'Parramatta', lat: -33.8136, lng: 151.0034, suburb: 'Parramatta', state: 'NSW', postcode: '2150', intersection: 'Church St & Macquarie St', grants: [{ name: 'Parramatta Bridge Renewal', id: 'GR-1001', status: 'Approved' }] },
+    { id: 'RAMS-4410', title: 'Parramatta Road', type: 'Road', riskId: 'RISK-3', loc: 'Parramatta', lat: -33.8150, lng: 151.0011, suburb: 'Granville', state: 'NSW', postcode: '2142', intersection: 'Parramatta Rd & Good St', grants: [] },
+    { id: 'BIS-1234', title: 'Hawkesbury River Bridge', type: 'Bridge', riskId: 'RISK-2', loc: 'Hawkesbury', lat: -33.5446, lng: 151.1359, suburb: 'Brooklyn', state: 'NSW', postcode: '2083', intersection: 'Pacific Hwy & Brooklyn Rd', grants: [{ name: 'Hawkesbury Bridge Strengthening', id: 'GR-1003', status: 'Submitted' }] },
+    { id: 'RAMS-1234', title: 'Pacific Highway Newcastle', type: 'Road', riskId: 'RISK-4', loc: 'Newcastle', lat: -32.9283, lng: 151.7817, suburb: 'Newcastle', state: 'NSW', postcode: '2300', intersection: 'Pacific Hwy & Hunter St', grants: [{ name: 'Newcastle Road Resheeting', id: 'GR-1002', status: 'Submitted' }] },
+    { id: 'RAMS-2210', title: 'Epping Road Macquarie Park', type: 'Road', riskId: 'RISK-5', loc: 'Mac Park', lat: -33.7769, lng: 151.1180, suburb: 'Macquarie Park', state: 'NSW', postcode: '2113', intersection: 'Epping Rd & Herring Rd', grants: [] },
   ];
   let assets;
   try { assets = JSON.parse(localStorage.getItem(AKEY)) || seedAssets(); } catch { assets = seedAssets(); }
@@ -58,7 +84,19 @@
     if (!a.grants) a.grants = s.grants || [];
     if (!a.inflight) a.inflight = projects.filter((x) => x.assetId === a.id).map((x) => x.id);
     if (!a.future) a.future = [];
+    if (a.riskId === undefined) a.riskId = s.riskId || '';
   });
+  projects.forEach((p) => { if (p.gated === undefined) { p.gated = p.id !== p.preGate; p.prereq = p.gated; p.gatedId = p.gated ? p.id : ''; } });
+  // One-off: add the new sample projects and link them to assets (flag stops them reappearing after being renamed).
+  if (!localStorage.getItem('pamb.seed.v2')) {
+    seedExtra().forEach((s) => { if (!projects.some((x) => x.id === s.id)) projects.push(s); });
+    Object.entries(SEED_LINKS).forEach(([aid, l]) => {
+      const a = findAsset(aid); if (!a) return;
+      ['inflight', 'future'].forEach((k) => l[k].forEach((pid) => { if (projects.some((x) => x.id === pid) && !a[k].includes(pid)) a[k].push(pid); }));
+    });
+    localStorage.setItem('pamb.seed.v2', '1');
+    localStorage.setItem(KEY, JSON.stringify(projects)); localStorage.setItem(AKEY, JSON.stringify(assets));
+  }
   const save = () => localStorage.setItem(KEY, JSON.stringify(projects));
   const user = () => localStorage.getItem(AUTH);
 
@@ -87,7 +125,7 @@
   const LISTS = {
     grants: ['List of Grants', ['Grant Name', 'Grant ID', 'Council', 'Amount', 'Status'], [['Parramatta Bridge Renewal', 'GR-1001', 'City of Parramatta', '$1,200,000', 'Approved'], ['Newcastle Road Resheeting', 'GR-1002', 'Newcastle', '$850,000', 'Submitted']]],
     documents: ['List of Documents', ['Document', 'Project ID', 'Type', 'Uploaded', 'Compliance'], [['Project_estimate.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Compliant'], ['Design v11.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Under review']]],
-    risks: ['List of Risks', ['Risk ID', 'Title', 'Asset ID', 'Category', 'Owner', 'Status'], [['RISKHUB-123', 'Structural fatigue', 'BIS-9561', 'Safety', 'John Doe', 'Open'], ['RISKHUB-456', 'Scour at piers', 'BIS-9561', 'Environmental', 'Jane Smith', 'Open']]],
+    risks: ['List of Risks', ['Risk ID', 'Title', 'Asset ID', 'Category', 'Owner', 'Status'], RISKS],
     gprio: ['Prioritization Scores', ['Grant ID', 'Grant Name', 'Score', 'Rank'], [['GR-1001', 'Parramatta Bridge Renewal', '8', '1'], ['GR-1002', 'Newcastle Road Resheeting', '6', '2']]],
     permits: ['List of Permits', ['Permit ID', 'Operator', 'Route', 'Valid To', 'Status'], [['FP-2001', 'Hunter Freight Pty Ltd', 'Pacific Hwy', '30/06/2026', 'Active'], ['FP-2002', 'Metro Haulage', 'M4 Motorway', '31/03/2026', 'Pending']]],
   };
@@ -146,7 +184,7 @@
       app.innerHTML = `<h1>List of Projects</h1><div class="row sp"><div class="row search"><input id="q" placeholder="Search projects" value="${esc(sessionStorage.getItem('q') || '')}"><button class="btn" id="sq">Search</button><button class="btn alt" id="adv">Advanced Search ${adv ? '▲' : '▼'}</button></div><div class="row"><a class="btn green" href="#/new">＋ Create Project</a><button class="btn alt" id="pdf">Export PDF</button></div></div>
       ${adv ? advPanel(f) : ''}
       <div class="scroll" style="margin-top:16px"><table class="tbl"><thead><tr>${['Project Name', 'Project ID', 'Asset Type', 'P50 Date', 'P90 Date', 'Slippage', 'Gate Status', 'PM', 'Prioritization Score', 'Action'].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>
-      ${shown.map((p) => `<tr><td><a href="#/project/${p.id}/project">${esc(p.name)}</a></td><td><a href="#/project/${p.id}/project">${esc(p.id)}</a></td><td>${esc(p.assetType)}</td><td>${esc(p.p50)}</td><td>${esc(p.p90)}</td><td>${esc(p.slip)}</td><td>${esc(p.gate)}</td><td>${esc(p.pm)}</td><td>${esc(p.score)}</td><td><button class="ic" title="Edit" data-a="edit" data-id="${p.id}">✏️</button><button class="ic" title="Email" data-a="mail" data-id="${p.id}">✉️</button><button class="ic" title="Add document" data-a="doc" data-id="${p.id}">📎</button><button class="ic" title="Comment" data-a="cmt" data-id="${p.id}">💬</button></td></tr>`).join('') || '<tr><td colspan="10">No data found</td></tr>'}
+      ${shown.map((p) => `<tr><td><a href="#/project/${p.id}/project">${esc(p.name)}</a></td><td><a href="#/project/${p.id}/project">${esc(p.id)}</a></td><td>${esc(p.assetType)}</td><td>${esc(p.p50)}</td><td>${esc(p.p90)}</td><td>${esc(p.slip)}</td><td>${esc(p.gate)}</td><td>${esc(p.pm)}</td><td>${esc(p.score)}</td><td><a href="#/project/${esc(p.id)}/project">View</a> | <a href="#/project/${esc(p.id)}/project">Edit</a></td></tr>`).join('') || '<tr><td colspan="10">No data found</td></tr>'}
       </tbody></table></div>
       <div class="pager"><label>Page size <select id="ps">${[5, 10, 25].map((n) => `<option ${n === size ? 'selected' : ''}>${n}</option>`).join('')}</select></label><span>Showing ${shown.length} of ${rows.length} results</span><span class="row"><button class="btn sm alt" id="pv" ${pg <= 1 ? 'disabled' : ''}>&lt;</button> ${pg} / ${pages} <button class="btn sm alt" id="nx" ${pg >= pages ? 'disabled' : ''}>&gt;</button></span></div>`;
       $('#sq').onclick = () => { sessionStorage.setItem('q', $('#q').value); sessionStorage.setItem('pg', 1); views.projects(); };
@@ -160,7 +198,6 @@
         $('#asCancel').onclick = () => { sessionStorage.removeItem('f'); sessionStorage.setItem('adv', '0'); views.projects(); };
         $('#asGo').onclick = () => { const o = {}; $$('[data-f]').forEach((i) => (o[i.dataset.f] = i.value)); sessionStorage.setItem('f', JSON.stringify(o)); sessionStorage.setItem('pg', 1); views.projects(); };
       }
-      $$('[data-a]').forEach((b) => (b.onclick = () => rowAction(b.dataset.a, projects.find((p) => p.id === b.dataset.id))));
     },
     new() { projectForm({ isNew: true }); },
     project(id, tab = 'project') {
@@ -174,12 +211,6 @@
   const advFields = [['pid', 'Project ID'], ['aid', 'Asset ID'], ['rid', 'Risk ID'], ['gate', 'Gate Status'], ['active', 'Active Project'], ['created', 'Created Date'], ['council', 'Council Grant'], ['focus', 'Project Focus'], ['score', 'Prioritization Score'], ['fin', 'Forecast Finish Date'], ['pm', 'Project Manager'], ['wbs', 'WBS Code']];
   function advPanel(f) {
     return `<div class="panel" style="margin-top:14px"><h2>Advanced Search</h2><div class="body"><div class="g4 f">${advFields.map(([k, l]) => `<div><label>${l}</label><input data-f="${k}" value="${esc(f[k] || '')}"></div>`).join('')}</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn alt" id="asCancel">Cancel</button><button class="btn" id="asGo">Search</button></div></div></div>`;
-  }
-  function rowAction(a, p) {
-    if (a === 'edit') location.hash = `#/project/${p.id}/project`;
-    if (a === 'mail') modal(`<h2>Email project owner</h2><div class="f"><label>To</label><input value="${esc(p.pm)}@transport.nsw.gov.au"><br><br><label>Message</label><textarea>Re: ${esc(p.name)} (${esc(p.id)})</textarea></div><br><div class="row"><button class="btn alt" data-close>Cancel</button><button class="btn" id="ok">Send</button></div>`, () => ($('#ok').onclick = () => { closeModal(); toast('Email sent.'); }));
-    if (a === 'doc') location.hash = `#/project/${p.id}/financial`;
-    if (a === 'cmt') modal(`<h2>Comment on ${esc(p.id)}</h2><textarea id="c"></textarea><br><br><div class="row"><button class="btn alt" data-close>Cancel</button><button class="btn" id="ok">Post</button></div>`, () => ($('#ok').onclick = () => { closeModal(); toast('Comment posted.'); }));
   }
 
   function tiles(map) { L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map); }
@@ -217,10 +248,23 @@
         if (!a) { toast('Asset not found. Pick an existing asset ID.', 'err'); return; }
         p.assetId = a.id; p.assetType = a.type;
       }
+      if ($('#tab [data-k="riskId"]')) p.risk.rid = p.riskId; else if ($('#tab [data-k="risk.rid"]')) p.riskId = p.risk.rid;
+      if (riskTitle(p.riskId)) p.risk.title = riskTitle(p.riskId);
+      if ($('#tab [data-k="prereq"]')) {
+        if (p.prereq && !p.gated && !p.gatedId.trim()) { toast('Enter a Gated Project ID once all pre-requisites are complete.', 'err'); return; }
+      }
+      const oldId = p.id;
+      const nid = p.gated ? p.id : (p.prereq && p.gatedId.trim()) ? p.gatedId.trim() : (p.preGate || '').trim();
+      if (!p.name || !nid) { toast(isNew ? 'Project Name and Pre-Gate Project ID are required.' : 'Project Name is required.', 'err'); return; }
+      if (projects.some((x) => x !== p && x.id === nid)) { toast('A project with that ID already exists.', 'err'); return; }
+      if (!p.gated && p.prereq) { p.gated = true; p.gatedId = nid; if (/^pre-gate/i.test(p.gate)) p.gate = 'Gate 1'; }
+      p.id = nid;
       if (isNew) {
-        if (!p.name || !p.id) { toast('Project Name and Gated Project ID are required.', 'err'); return; }
-        if (projects.some((x) => x.id === p.id)) { toast('A project with that ID already exists.', 'err'); return; }
         projects.push(p); syncProjectAsset(p); save(); toast('Project created.'); location.hash = `#/project/${p.id}/project`; return;
+      }
+      if (oldId !== nid) {
+        assets.forEach((a) => ['inflight', 'future'].forEach((k) => { a[k] = a[k].map((x) => (x === oldId ? nid : x)); }));
+        saveAssets(); syncProjectAsset(p); save(); toast('Project promoted to gated: ' + nid); location.hash = `#/project/${nid}/project`; return;
       }
       syncProjectAsset(p); save(); toast(msg);
     };
@@ -230,24 +274,27 @@
     project(p, isNew) {
       $('#tab').innerHTML = `<div class="cols"><div class="panel"><div class="body">
       ${F('name', 'Project Name', p.name)}
-      <div class="f"><label>Pre-Gate Project ID</label><div class="inl"><input data-k="preChk" type="checkbox" ${p.preChk ? 'checked' : ''}><input data-k="preGate" value="${esc(p.preGate)}"><span class="tick">✔</span></div></div><br>
-      <div class="f"><label>Gated Project ID</label><div class="inl"><input data-k="gatedChk" type="checkbox" ${p.gatedChk ? 'checked' : ''}><input data-k="id" value="${esc(p.id)}" ${isNew ? '' : 'readonly'}><span class="tick">✔</span></div></div><br>
+      <div class="f"><label>Pre-Gate Project ID</label><input data-k="preGate" value="${esc(p.preGate)}"       ${isNew ? '' : 'readonly'}></div><br>
+      <div class="f"><label class="inl"><input data-k="prereq" id="prereq" type="checkbox" ${p.prereq ? 'checked' : ''} ${p.gated ? 'disabled' : ''}> All pre-requisites complete</label></div><br>
+      <div class="f" id="gatedRow" style="display:${p.prereq ? 'block' : 'none'}"><label>Gated Project ID</label><input data-k="gatedId" value="${esc(p.gatedId)}" ${p.gated ? 'readonly' : ''} placeholder="e.g. PROJ-114"></div>${p.prereq ? '<br>' : ''}
       <div class="f"><label>Asset Type</label><select data-k="assetType">${['', 'Road', 'Bridge', 'Rail', 'Maritime'].map((o) => `<option ${o === p.assetType ? 'selected' : ''}>${o}</option>`).join('')}</select></div><br>
-      ${assetPicker(p)}<br>${F('riskId', 'Risk ID', p.riskId)}<br>
+      ${assetPicker(p)}<br><div class="f"><label>Risk ID</label>${riskSel('data-k="riskId"', p.riskId)}</div><br>
       <div class="f"><label>Ministerial Agenda</label><div class="inl"><input data-k="agenda" value="${esc(p.agenda)}"><button class="btn sm" id="play" title="Open agenda">▶</button></div></div>
       </div></div><div><div id="map" class="map"></div>
       ${isNew ? `<div class="row f" style="margin-top:10px"><div><label>Longitude</label><input id="lng" type="number" step="any" value="${p.lng}"></div><div><label>Latitude</label><input id="lat" type="number" step="any" value="${p.lat}"></div><button class="btn" id="plot" style="align-self:flex-end">Plot on Map</button></div>` : '<p class="muted">Live traffic map (OpenStreetMap).</p>'}</div></div>${saveBar(p, isNew)}`;
       const m = L.map('map').setView([p.lat, p.lng], 14); tiles(m); const mk_ = L.marker([p.lat, p.lng]).addTo(m);
       if (isNew) $('#plot').onclick = () => { const la = +$('#lat').value, lo = +$('#lng').value; if (isNaN(la) || isNaN(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return toast('Invalid coordinates.', 'err'); p.lat = la; p.lng = lo; mk_.setLatLng([la, lo]); m.setView([la, lo], 14); };
       $('#play').onclick = () => (location.hash = '#/agenda');
+      $('#prereq').onchange = (e) => { $('#gatedRow').style.display = e.target.checked ? 'block' : 'none'; };
       bindSave(p, isNew);
     },
     asset(p, isNew) {
       const a = findAsset(p.assetId);
       if (!a) { $('#tab').innerHTML = '<div class="panel"><div class="body">No asset linked. Select an existing asset on the Project tab.</div></div>'; return; }
-      const pool = isNew ? [...projects, p] : projects;
+      const pid = p.id || p.preGate;
+      const pool = isNew ? [...projects, { ...p, id: pid }] : projects;
       const st = { edit: false, d: a, pool, inflight: new Set(a.inflight), future: new Set(a.future) };
-      if (p.id && !st.inflight.has(p.id) && !st.future.has(p.id)) st.inflight.add(p.id);
+      if (pid && !st.inflight.has(pid) && !st.future.has(pid)) st.inflight.add(pid);
       st.footer = `<div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn" href="#/asset/${esc(a.id)}">Open Asset to Edit</a></div>`;
       assetTabs($('#tab'), st);
     },
@@ -267,7 +314,7 @@
     },
     risk(p) {
       const r = p.risk;
-      $('#tab').innerHTML = `<div class="panel"><h2>Risk Identification</h2><div class="body g4 f">${F('risk.title', 'Risk Title', r.title)}${F('risk.rid', 'Risk ID', r.rid)}${F('risk.asset', 'Asset ID', r.asset)}${F('risk.cat', 'Risk Category', r.cat)}</div></div>
+      $('#tab').innerHTML = `<div class="panel"><h2>Risk Identification</h2><div class="body g4 f">${F('risk.title', 'Risk Title', r.title)}<div class="f"><label>Risk ID</label>${riskSel('data-k="risk.rid"', r.rid)}</div>${F('risk.asset', 'Asset ID', r.asset)}${F('risk.cat', 'Risk Category', r.cat)}</div></div>
       <div class="panel"><h2>Additional Details</h2><div class="body g4 f">${F('risk.owner', 'Risk Owner', r.owner)}${F('risk.created', 'Created', r.created)}${F('risk.due', 'Due date', r.due)}<div><label>Risk Status</label><select data-k="risk.status">${['Open', 'Mitigated', 'Closed'].map((o) => `<option ${o === r.status ? 'selected' : ''}>${o}</option>`).join('')}</select></div></div></div>
       <div class="g2 f"><div><label>Risk Action</label><textarea data-k="risk.action">${esc(r.action)}</textarea></div><div><label>Risk Commentary</label><textarea data-k="risk.comment">${esc(r.comment)}</textarea></div></div>${saveBar(p)}`;
       bindSave(p, false, 'Risk saved successfully.');
@@ -375,7 +422,7 @@
     const grantTbl = (title, list) => `<div class="panel"><h2>${title}</h2><div class="body scroll"><table class="tbl"><thead><tr><th>Grant Name</th><th>Grant ID</th><th>Status</th></tr></thead><tbody>${list.map((g) => `<tr><td>${esc(g.name)}</td><td>${esc(g.id)}</td><td>${esc(g.status)}</td></tr>`).join('') || '<tr><td colspan="3">No data found</td></tr>'}</tbody></table></div></div>`;
     const grants = d.grants || [];
     const body = {
-      details: `<div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID')}${AF('title', 'Asset Title')}${typeSel}${AF('loc', 'Location')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('intersection', 'Closest Intersection')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}</div></div></div>
+      details: `<div class="cols"><div><div class="panel"><h2>Asset Details</h2><div class="body g2 f">${AF('id', 'Asset ID')}${AF('title', 'Asset Title')}${typeSel}${AF('loc', 'Location')}${AF('suburb', 'Suburb')}${AF('state', 'State')}${AF('postcode', 'Postcode')}${AF('intersection', 'Closest Intersection')}${AF('lat', 'Latitude')}${AF('lng', 'Longitude')}<div class="f"><label>Risk ID</label>${riskSel('data-ak="riskId"', d.riskId || '', !edit)}</div></div></div></div>
         <div><div id="amap" class="map" style="height:300px"></div><br><a class="btn" href="#/amd">View Asset Maintenance Data App</a></div></div>`,
       projects: projPanel('inflight', 'In-Flight Projects') + projPanel('future', 'Future Projects'),
       grants: grantTbl('In-flight Projects based on Grants Approval', grants.filter((g) => g.status === 'Approved')) + grantTbl('Pipeline Grants Submission', grants.filter((g) => g.status !== 'Approved')),
