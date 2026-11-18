@@ -74,7 +74,7 @@
 
   const views = {
     home() {
-      app.innerHTML = `<div class="home"><div><div class="hero">${heroSvg}</div><a class="btn" href="#/login">Transport User Login</a></div><div>
+      app.innerHTML = `<div class="home"><div><div class="hero"><img src="hero.png" alt="Asset management illustration"></div><a class="btn" href="#/login">Transport User Login</a></div><div>
       <div class="card"><h2>📰 Latest News</h2><ul><li>Transport has secured $1.2B funds to pave 36 km in Newcastle</li><li>Line marking supplier sued by ACCC</li><li>TACP program has moved to Phase 2</li><li>RAISI Phase 2 &amp; 3 now may extend to end of 2028</li></ul></div>
       <div class="card"><h2>📅 Announcements</h2><ul><li>Transport secretary bold claim: we are modernizing TFM</li><li>TFM unit just secured $1.2B funding to upskill</li></ul></div></div></div>`;
     },
