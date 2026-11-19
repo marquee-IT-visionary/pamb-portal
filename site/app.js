@@ -231,8 +231,8 @@
   }
 
   function tiles(map) { L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map); }
-  const tabs = ['project', 'asset', 'benefits', 'risk', 'financial', 'schedule', 'audit'];
-  const tabName = { project: 'Project', asset: 'Asset', benefits: 'Benefits', risk: 'Risk', financial: 'Financial', schedule: 'Schedule', audit: 'Audit' };
+  const tabs = ['project', 'asset', 'benefits', 'risk', 'financial', 'schedule', 'teambinder', 'audit'];
+  const tabName = { project: 'Project', asset: 'Asset', benefits: 'Benefits', risk: 'Risk', financial: 'Financial', schedule: 'Schedule', teambinder: 'TeamBinder', audit: 'Audit' };
 
   function projectForm({ p, tab = 'project', isNew }) {
     if (isNew) p = mk('', '', {});
@@ -367,6 +367,10 @@
       };
       $('#cm').onclick = () => add('m', 'M'); $('#cs').onclick = () => add('u', 'S');
       $('#sv').onclick = () => { save(); toast('Project schedule saved successfully.'); };
+    },
+    teambinder(p) {
+      $('#tab').innerHTML = '<div class="panel"><h2>TeamBinder</h2><div class="body" style="text-align:center;padding:48px 0"><button class="btn" id="tbsync">Sync from TeamBinder</button><p class="muted" id="tbmsg"></p></div></div>';
+      $('#tbsync').onclick = () => { $('#tbmsg').textContent = 'Last synced ' + new Date().toLocaleString('en-AU'); toast('Synced from TeamBinder.'); };
     },
     audit(p) { $('#tab').innerHTML = '<div class="panel"><h2>Audit</h2><div class="body muted">No audit entries yet.</div></div>'; },
   };

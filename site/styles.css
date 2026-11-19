@@ -20,7 +20,7 @@ a{color:var(--navy)}
 .user{display:flex;gap:8px;align-items:center;font-weight:600;color:var(--navy);cursor:pointer;background:none;border:0;font:inherit}
 .user svg{width:28px;height:28px}
 .btn{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border:2px solid var(--navy);border-radius:4px;padding:8px 18px;font:600 14px 'Public Sans',sans-serif;cursor:pointer;text-decoration:none}
-.btn:hover{filter:brightness(1.2)}.btn.alt{background:#fff;color:var(--navy)}.btn.red{background:var(--red);border-color:var(--red)}.btn.green{background:var(--green);border-color:var(--green)}.btn.sm{padding:4px 10px;font-size:13px}
+.btn:hover{filter:brightness(1.2)}.btn.alt{background:#fff;color:var(--navy)}.btn.red{background:var(--red);border-color:var(--red)}.btn.green{background:var(--navy);border-color:var(--navy)}.btn.sm{padding:4px 10px;font-size:13px}
 .btn.grey{background:#f3f3f3;color:#222;border-color:#bbb}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
 h1{font-size:26px;color:var(--navy);margin:0 0 16px}h2{font-size:18px;margin:0 0 10px}
