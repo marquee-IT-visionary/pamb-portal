@@ -106,7 +106,7 @@
     localStorage.setItem(KEY, JSON.stringify(projects)); localStorage.setItem(AKEY, JSON.stringify(assets));
   }
   const save = () => localStorage.setItem(KEY, JSON.stringify(projects));
-  const user = () => localStorage.getItem(AUTH);
+  const user = () => 'C James';
 
   function toast(msg, kind = 'ok') {
     const t = document.createElement('div'); t.className = 'toast ' + kind; t.textContent = msg; $('#toasts').append(t); setTimeout(() => t.remove(), 3500);
@@ -139,8 +139,8 @@
   document.addEventListener('click', () => $$('#nav .mi').forEach((x) => x.classList.remove('open')));
   function renderUser() {
     renderNav();
-    $('#userbox').innerHTML = user() ? `<button class="user" id="logout" title="Click to sign out">C James ${userSvg}</button>` : '';
-    const b = $('#logout'); if (b) b.onclick = () => { localStorage.removeItem(AUTH); location.hash = '#/'; };
+    $('#userbox').innerHTML = user() ? `<button class="user" id="logout" title="Home">C James ${userSvg}</button>` : '';
+    const b = $('#logout'); if (b) b.onclick = () => { location.hash = '#/'; };
   }
 
   const heroSvg = `<svg viewBox="0 0 600 380" preserveAspectRatio="xMidYMid slice"><circle cx="420" cy="170" r="46" fill="#ffd9a0" opacity=".9"/><path d="M-20 300 Q300 120 620 290" stroke="#fff" stroke-width="10" fill="none"/><path d="M-20 330 Q300 150 620 320" stroke="#e8e8f5" stroke-width="6" fill="none"/>${Array.from({ length: 14 }, (_, i) => { const x = 20 + i * 42; const y = 300 - 175 * Math.sin((x + 20) / 640 * Math.PI) * 0.97; return `<line x1="${x}" y1="${y + 14}" x2="${x}" y2="${y + 40}" stroke="#fff" stroke-width="2"/>`; }).join('')}<rect y="330" width="600" height="50" fill="#1b2a52"/></svg>`;
