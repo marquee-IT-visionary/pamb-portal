@@ -125,14 +125,10 @@
     ['Assets', [['List of Assets', '#/assets']]],
     ['Grants', [['List of Grants', '#/list/grants']]],
     ['Risk', [['List of Risks', '#/risks']]],
-    ['Grants Prioritization', [['Prioritization Scores', '#/list/gprio']]],
-    ['Freight Permits', [['List of Permits', '#/list/permits']]],
   ];
   const LISTS = {
     grants: ['List of Grants', ['Grant Name', 'Grant ID', 'Council', 'Amount', 'Status'], [['Parramatta Bridge Renewal', 'GR-1001', 'City of Parramatta', '$1,200,000', 'Approved'], ['Newcastle Road Resheeting', 'GR-1002', 'Newcastle', '$850,000', 'Submitted']]],
     documents: ['List of Documents', ['Document', 'Project ID', 'Type', 'Uploaded', 'Compliance'], [['Project_estimate.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Compliant'], ['Design v11.pdf', 'PROJ-1234', 'PDF', '15/12/2025', 'Under review']]],
-    gprio: ['Prioritization Scores', ['Grant ID', 'Grant Name', 'Score', 'Rank'], [['GR-1001', 'Parramatta Bridge Renewal', '8', '1'], ['GR-1002', 'Newcastle Road Resheeting', '6', '2']]],
-    permits: ['List of Permits', ['Permit ID', 'Operator', 'Route', 'Valid To', 'Status'], [['FP-2001', 'Hunter Freight Pty Ltd', 'Pacific Hwy', '30/06/2026', 'Active'], ['FP-2002', 'Metro Haulage', 'M4 Motorway', '31/03/2026', 'Pending']]],
   };
   function renderNav() {
     const li = !!user();
